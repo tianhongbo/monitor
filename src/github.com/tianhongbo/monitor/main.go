@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"io"
 	"io/ioutil"
@@ -13,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 )
 
 const AWS_SQS_URL = "https://sqs.us-west-2.amazonaws.com/497100832806/MTaaS-emulator-queue"
@@ -21,6 +21,9 @@ const AWS_SQS_ARN = "arn:aws:sqs:us-west-2:497100832806:MTaaS-emulator-queue"
 const RSP_EMULATOR_URI = "http://mtaas-worker.us-west-2.elasticbeanstalk.com/api/v1/emulator/"
 
 const AWS_CURRENT_REGION = "us-west-2"
+const EMULATOR_EC2_TYPE = "t2.micro"
+const EMULATOR_3_IMAGE_ID = "ami-574cf937"
+const EMULATOR_10_IMAGE_ID = "ami-cf4df8af"
 
 const AWS_PUBLIC_IP_URI = "http://instance-data/latest/meta-data/public-ipv4"
 const AWS_LOCAL_IP_URI = "http://instance-data/latest/meta-data/local-ipv4"
@@ -299,35 +302,47 @@ func deleteOneMsg(svc *sqs.SQS, ReceiptHandle string) {
 
 func main() {
 
-	sess, err := session.NewSession()
-	if err != nil {
-		log.Println("failed to create session,", err)
-		return
-	}
+	e := NewEc2(AWS_CURRENT_REGION, EMULATOR_3_IMAGE_ID, EMULATOR_EC2_TYPE)
 
-	svc := sqs.New(sess, &aws.Config{Region: aws.String(AWS_CURRENT_REGION)})
-
-	for hasFreeEmulator() {
-		// receive one message
-		req, handler, err := getOneMsg(svc)
+	/*	sess, err := session.NewSession()
 		if err != nil {
-			continue
-		}
-		log.Println(req.Id, handler)
-
-		// process the message
-		err = doOneMsg(req)
-		if err != nil {
-			// do not delete the message from sqs queue
-			log.Println("fail to process the request.")
-			continue
+			log.Println("failed to create session,", err)
+			return
 		}
 
-		// delete the message
-		deleteOneMsg(svc, handler)
+		svc := sqs.New(sess, &aws.Config{Region: aws.String(AWS_CURRENT_REGION)})
 
-		// delay for
+		for hasFreeEmulator() {
+			// receive one message
+			req, handler, err := getOneMsg(svc)
+			if err != nil {
+				continue
+			}
+			log.Println(req.Id, handler)
+
+			// process the message
+			err = doOneMsg(req)
+			if err != nil {
+				// do not delete the message from sqs queue
+				log.Println("fail to process the request.")
+				continue
+			}
+
+			// delete the message
+			deleteOneMsg(svc, handler)
+
+			// delay for
+		}
+	*/
+
+	e.launch()
+	log.Println("emulator ec2 is launched with id: ", e.InstanceId)
+
+	for i := 0; i < 30; i++ {
+		time.Sleep(time.Second * 1)
+		log.Println("I am waiting for ", i, "s")
+
 	}
-
-	log.Println("exits because all emulators are used now.")
+	e.terminate()
+	log.Println("emulator ec2 is terminated with id: ", e.InstanceId)
 }
