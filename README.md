@@ -1,5 +1,5 @@
 # monitor
-Monitor EC2 resources and automatically scale-in and scale-out
+Auto scalling tool for AWS EC2 written with GO
 
 # Installation
 ## Install GOLANG
