@@ -51,7 +51,7 @@ func (m *hub_monitor_t) updateTotalNumOfAvailableHubs() {
 		log.Println("fail to get total available hubs number response. error: ", err)
 		return
 	}
-
+	defer resp.Body.Close()
 	v, err := jason.NewObjectFromReader(resp.Body)
 	if err != nil {
 		// handle error
@@ -106,7 +106,7 @@ func (m *hub_monitor_t) update() {
 		log.Println("fail to get hub hosts update message. error: ", err)
 		return
 	}
-
+	defer resp.Body.Close()
 	v, err := jason.NewObjectFromReader(resp.Body)
 
 	total, _ := v.GetNumber("total")
@@ -176,6 +176,7 @@ func (m *hub_monitor_t) provision() error {
 		if err != nil {
 			log.Println("fail to post one hub host. error: ", err)
 		}
+		defer resp.Body.Close()
 		log.Println("post one hub host. info: ", hub_host)
 		log.Println("post emulator host rsp: ", resp)
 
@@ -223,6 +224,7 @@ func (m *hub_monitor_t) terminateHost(vm *ec2_t) {
 		log.Println(err)
 		return
 	}
+	defer response.Body.Close()
 	log.Println("send terminate hub host req to: ", url)
 	log.Println("receive terminate hub host rsp: ", response)
 	return

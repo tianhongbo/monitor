@@ -74,6 +74,7 @@ func (m *emulator_monitor_t) updateTotalNumOfAvailableEmulators() {
 		log.Println("fail to get total available emulators number response. error: ", err)
 		return
 	}
+	defer resp.Body.Close()
 
 	v, err := jason.NewObjectFromReader(resp.Body)
 	if err != nil {
@@ -135,7 +136,7 @@ func (m *emulator_monitor_t) update() {
 		log.Println("fail to get emulator hosts update message. error: ", err)
 		return
 	}
-
+	defer resp.Body.Close()
 	v, err := jason.NewObjectFromReader(resp.Body)
 
 	total, _ := v.GetNumber("total")
@@ -222,6 +223,7 @@ func (m *emulator_monitor_t) provision() error {
 			if err != nil {
 				log.Println("fail to post one emulator. info: ", emu)
 			}
+			defer resp.Body.Close()
 			log.Println("post one emulator. info: ", emu)
 			log.Println("resp: ", resp)
 			v, err := jason.NewObjectFromReader(resp.Body)
@@ -254,6 +256,7 @@ func (m *emulator_monitor_t) provision() error {
 		if err != nil {
 			log.Println("fail to post one emulator host. error: ", err)
 		}
+		defer resp.Body.Close()
 		log.Println("post one emulator host. info: ", emu_host)
 		log.Println("post emulator host rsp: ", resp)
 
